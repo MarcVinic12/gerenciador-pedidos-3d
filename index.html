@@ -1,606 +1,411 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Impressão 3D</title>
+    <title>Print Manager 3D</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9; /* slate-100 */
-        }
-        /* Ocultar scrollbar mantendo a funcionalidade */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn.active { background-color: #f3f4f6; color: #2563eb; font-weight: bold; border-bottom: 2px solid #2563eb; }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col">
-
-    <header class="bg-blue-700 text-white shadow-md sticky top-0 z-20">
-        <div class="px-6 md:px-10 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <i data-lucide="box" class="w-7 h-7 text-blue-200"></i>
-                <h1 class="text-xl md:text-2xl font-bold tracking-tight">Print Manager 3D</h1>
+<body class="bg-slate-50 min-h-screen">
+    
+    <!-- Cabeçalho -->
+    <header class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold"><i class="fas fa-cube mr-2"></i> Print Manager 3D</h1>
+            <div id="status-badge" class="px-3 py-1 rounded-full text-sm font-bold bg-yellow-500 text-white">
+                A Ligar...
             </div>
-            <div class="text-xs font-medium bg-blue-800 py-1.5 px-3 rounded-full flex items-center gap-2 shadow-inner" id="status-badge">
-                <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
-                Conectando...
-            </div>
-        </div>
-        
-        <!-- Sistema de Abas -->
-        <div class="px-6 md:px-10 flex gap-1 mt-2 overflow-x-auto no-scrollbar">
-            <button onclick="switchTab('tab-new')" id="btn-tab-new" class="px-5 py-2.5 rounded-t-lg bg-white text-blue-700 font-semibold text-sm transition-colors flex items-center gap-2 border-t border-x border-transparent whitespace-nowrap">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                Novo Pedido
-            </button>
-            <button onclick="switchTab('tab-list')" id="btn-tab-list" class="px-5 py-2.5 rounded-t-lg text-blue-100 hover:bg-blue-600 hover:text-white font-semibold text-sm transition-colors flex items-center gap-2 border-t border-x border-transparent whitespace-nowrap">
-                <i data-lucide="list" class="w-4 h-4"></i>
-                Meus Pedidos
-            </button>
-            <button onclick="switchTab('tab-materials')" id="btn-tab-materials" class="px-5 py-2.5 rounded-t-lg text-blue-100 hover:bg-blue-600 hover:text-white font-semibold text-sm transition-colors flex items-center gap-2 border-t border-x border-transparent whitespace-nowrap">
-                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                Materiais Comprados
-            </button>
         </div>
     </header>
 
-    <main class="flex-grow container mx-auto px-4 md:px-6 py-6 max-w-5xl">
-        
-        <!-- Dashboard Resumo (Visível em todas as abas) -->
-        <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col justify-center">
-                <p class="text-xs text-slate-500 font-medium mb-1 flex items-center gap-1"><i data-lucide="shopping-bag" class="w-3 h-3 text-purple-500"></i> Gasto com Compras</p>
-                <p class="text-xl font-bold text-slate-800" id="dash-total-purchases">R$ 0,00</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col justify-center">
-                <p class="text-xs text-slate-500 font-medium mb-1 flex items-center gap-1"><i data-lucide="droplet" class="w-3 h-3 text-rose-500"></i> Custo de Fabricação</p>
-                <p class="text-xl font-bold text-slate-800" id="dash-total-fabrication">R$ 0,00</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col justify-center">
-                <p class="text-xs text-slate-500 font-medium mb-1 flex items-center gap-1"><i data-lucide="wrench" class="w-3 h-3 text-amber-500"></i> Total Mão de Obra</p>
-                <p class="text-xl font-bold text-slate-800" id="dash-total-labor">R$ 0,00</p>
-            </div>
-            <div class="bg-blue-50 rounded-xl shadow-sm border border-blue-100 p-4 flex flex-col justify-center">
-                <p class="text-xs text-blue-600 font-bold mb-1 uppercase">Faturamento (Pedidos)</p>
-                <p class="text-2xl font-black text-blue-700" id="dash-total-revenue">R$ 0,00</p>
-            </div>
-        </section>
+    <!-- Dashboard (Sempre Visível) -->
+    <div class="max-w-6xl mx-auto p-4 mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+            <p class="text-sm text-gray-500"><i class="fas fa-shopping-bag mr-1"></i> Gasto com Compras</p>
+            <p class="text-2xl font-bold text-gray-800" id="dash-compras">R$ 0,00</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+            <p class="text-sm text-gray-500"><i class="fas fa-tint mr-1"></i> Custo de Fabricação</p>
+            <p class="text-2xl font-bold text-gray-800" id="dash-fabricacao">R$ 0,00</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+            <p class="text-sm text-gray-500"><i class="fas fa-wrench mr-1"></i> Total Mão de Obra</p>
+            <p class="text-2xl font-bold text-gray-800" id="dash-maodeobra">R$ 0,00</p>
+        </div>
+        <div class="bg-blue-50 p-4 rounded-lg shadow border border-blue-100">
+            <p class="text-sm text-blue-600 font-semibold">FATURAMENTO (PEDIDOS)</p>
+            <p class="text-3xl font-bold text-blue-700" id="dash-faturamento">R$ 0,00</p>
+        </div>
+    </div>
 
-        <!-- ABA 1: NOVO PEDIDO -->
-        <div id="tab-new" class="tab-content active">
-            <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-                    <div class="bg-blue-100 p-2 rounded-lg">
-                        <i data-lucide="file-plus" class="w-5 h-5 text-blue-600"></i>
+    <!-- Navegação das Abas -->
+    <div class="max-w-6xl mx-auto mt-4 px-4">
+        <div class="flex space-x-2 border-b border-gray-200">
+            <button onclick="switchTab('tab-novo-pedido')" class="tab-btn active px-4 py-2 text-gray-600 rounded-t-lg transition-colors">
+                <i class="fas fa-plus-circle mr-1"></i> Novo Pedido
+            </button>
+            <button onclick="switchTab('tab-lista-pedidos')" class="tab-btn px-4 py-2 text-gray-600 rounded-t-lg transition-colors">
+                <i class="fas fa-list mr-1"></i> Meus Pedidos
+            </button>
+            <button onclick="switchTab('tab-materiais')" class="tab-btn px-4 py-2 text-gray-600 rounded-t-lg transition-colors">
+                <i class="fas fa-shopping-cart mr-1"></i> Materiais Comprados
+            </button>
+        </div>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div class="max-w-6xl mx-auto p-4 mb-10">
+        
+        <!-- ABA: Novo Pedido -->
+        <div id="tab-novo-pedido" class="tab-content active bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 class="text-xl font-bold mb-4 text-gray-700">Registar Novo Pedido</h2>
+            <form id="form-pedido" class="space-y-4 max-w-2xl">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nome do Cliente</label>
+                    <input type="text" id="cliente" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Produto / Peça</label>
+                    <input type="text" id="produto" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Peso Gasto (Gramas)</label>
+                        <input type="number" id="peso" step="0.1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" oninput="calcularPrevia()">
                     </div>
                     <div>
-                        <h2 class="text-lg font-bold text-slate-800">Registrar Peça</h2>
-                        <p class="text-sm text-slate-500">Calcule e salve um novo pedido.</p>
+                        <label class="block text-sm font-medium text-gray-700">Valor Mão de Obra (R$)</label>
+                        <input type="number" id="mao-obra" step="0.01" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" oninput="calcularPrevia()">
                     </div>
                 </div>
-                
-                <form id="order-form" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label for="client-name" class="block text-sm font-semibold text-slate-700 mb-1.5">Nome do Cliente</label>
-                            <input type="text" id="client-name" required placeholder="Ex: Maria Oliveira" 
-                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50 focus:bg-white">
-                        </div>
-                        <div>
-                            <label for="product-name" class="block text-sm font-semibold text-slate-700 mb-1.5">Produto / Peça</label>
-                            <input type="text" id="product-name" required placeholder="Ex: Action Figure Batman" 
-                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50 focus:bg-white">
-                        </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-slate-50 p-5 rounded-xl border border-slate-100">
-                        <div>
-                            <label for="weight-grams" class="block text-sm font-semibold text-slate-700 mb-1.5 flex justify-between">
-                                Peso da Peça
-                                <span class="text-xs text-slate-400 font-normal">(x 0,10 R$)</span>
-                            </label>
-                            <div class="relative">
-                                <input type="number" id="weight-grams" required min="0.1" step="0.1" placeholder="0" 
-                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-12 text-lg font-medium">
-                                <span class="absolute right-4 top-3 text-slate-400 font-medium pointer-events-none">g</span>
-                            </div>
-                        </div>
+                <div class="bg-gray-50 p-4 rounded-md border border-gray-200 mt-4">
+                    <p class="text-sm text-gray-600">Custo do Material (0,10/g): <span id="previa-material" class="font-bold text-gray-800">R$ 0,00</span></p>
+                    <p class="text-lg text-gray-800 mt-2">Valor Total a Cobrar: <span id="previa-total" class="font-bold text-blue-600 text-2xl">R$ 0,00</span></p>
+                </div>
 
-                        <div>
-                            <label for="labor-cost" class="block text-sm font-semibold text-slate-700 mb-1.5">Sua Mão de Obra</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-3 text-slate-500 font-medium pointer-events-none">R$</span>
-                                <input type="number" id="labor-cost" required min="0" step="0.01" placeholder="0,00" 
-                                    class="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-lg font-medium">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-blue-900 rounded-xl p-5 text-white shadow-inner flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div class="flex items-center gap-6 w-full md:w-auto">
-                            <div>
-                                <p class="text-blue-300 text-xs font-semibold uppercase tracking-wider mb-0.5">Custo Material</p>
-                                <p class="text-xl font-medium" id="preview-material-cost">R$ 0,00</p>
-                            </div>
-                            <div class="text-blue-500 font-light text-2xl">+</div>
-                            <div>
-                                <p class="text-blue-300 text-xs font-semibold uppercase tracking-wider mb-0.5">Mão de Obra</p>
-                                <p class="text-xl font-medium" id="preview-labor-cost">R$ 0,00</p>
-                            </div>
-                        </div>
-                        <div class="text-right w-full md:w-auto pt-4 md:pt-0 border-t border-blue-800 md:border-t-0 md:pl-6 md:border-l">
-                            <p class="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-0.5">Valor Total do Pedido</p>
-                            <p class="text-3xl font-black text-yellow-400" id="preview-total-value">R$ 0,00</p>
-                        </div>
-                    </div>
-
-                    <button type="submit" id="submit-btn" disabled
-                        class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-4 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-lg">
-                        <i data-lucide="save" class="w-5 h-5"></i>
-                        <span id="submit-text">Registrar Pedido</span>
-                    </button>
-                </form>
-            </section>
+                <button type="submit" id="btn-salvar-pedido" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition opacity-50 cursor-not-allowed" disabled>
+                    Registar Pedido
+                </button>
+            </form>
         </div>
 
-        <!-- ABA 2: LISTA DE PEDIDOS -->
-        <div id="tab-list" class="tab-content">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                    <h2 class="text-xl font-bold flex items-center gap-2 text-slate-800">
-                        <i data-lucide="list-checks" class="w-5 h-5 text-blue-600"></i>
-                        Meus Pedidos
-                    </h2>
-                </div>
-                <div class="overflow-x-auto w-full no-scrollbar">
-                    <table class="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
-                        <thead>
-                            <tr class="bg-white border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-                                <th class="px-6 py-4 font-semibold">Data</th>
-                                <th class="px-6 py-4 font-semibold">Cliente</th>
-                                <th class="px-6 py-4 font-semibold">Produto</th>
-                                <th class="px-6 py-4 font-semibold text-right">Peso (g)</th>
-                                <th class="px-6 py-4 font-semibold text-right">Material</th>
-                                <th class="px-6 py-4 font-semibold text-right">Mão de Obra</th>
-                                <th class="px-6 py-4 font-semibold text-right text-blue-700">Total</th>
+        <!-- ABA: Lista de Pedidos -->
+        <div id="tab-lista-pedidos" class="tab-content bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 class="text-xl font-bold mb-4 text-gray-700">Histórico de Pedidos</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-sm whitespace-nowrap">
+                    <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-gray-600">Data</th>
+                            <th class="px-4 py-3 text-gray-600">Cliente</th>
+                            <th class="px-4 py-3 text-gray-600">Produto</th>
+                            <th class="px-4 py-3 text-gray-600 text-right">Peso (g)</th>
+                            <th class="px-4 py-3 text-gray-600 text-right">Material</th>
+                            <th class="px-4 py-3 text-gray-600 text-right">Mão de Obra</th>
+                            <th class="px-4 py-3 text-gray-800 font-bold text-right">Total</th>
+                            <th class="px-4 py-3 text-gray-600 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-pedidos" class="divide-y divide-gray-200">
+                        <tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">A carregar pedidos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ABA: Materiais Comprados -->
+        <div id="tab-materiais" class="tab-content grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Formulário Nova Compra -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 md:col-span-1 h-fit">
+                <h2 class="text-lg font-bold mb-4 text-gray-700"><i class="fas fa-shopping-cart text-purple-500 mr-2"></i>Nova Compra</h2>
+                <form id="form-material" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Material / Filamento</label>
+                        <input type="text" id="nome-material" placeholder="Ex: PLA Preto 1kg" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Custo Pago (R$)</label>
+                        <input type="number" id="custo-material" step="0.01" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
+                    </div>
+                    <button type="submit" id="btn-salvar-material" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 transition opacity-50 cursor-not-allowed" disabled>
+                        Registar Material
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de Materiais -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 md:col-span-2">
+                <h2 class="text-lg font-bold mb-4 text-gray-700">Estoque / Materiais Registados</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm whitespace-nowrap">
+                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-gray-600">Data</th>
+                                <th class="px-4 py-3 text-gray-600">Material / Filamento</th>
+                                <th class="px-4 py-3 text-gray-600 text-right">Custo Pago</th>
+                                <th class="px-4 py-3 text-gray-600 text-center">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="orders-table-body" class="divide-y divide-slate-100 text-sm">
-                            <tr id="empty-state-orders">
-                                <td colspan="7" class="px-6 py-10 text-center text-slate-400">Carregando pedidos...</td>
-                            </tr>
+                        <tbody id="tabela-materiais" class="divide-y divide-gray-200">
+                            <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">A carregar materiais...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ABA 3: MATERIAIS COMPRADOS -->
-        <div id="tab-materials" class="tab-content">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Formulário de Compras -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <div class="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100">
-                            <div class="bg-purple-100 p-2 rounded-lg">
-                                <i data-lucide="shopping-cart" class="w-5 h-5 text-purple-600"></i>
-                            </div>
-                            <h2 class="text-lg font-bold text-slate-800">Nova Compra</h2>
-                        </div>
-                        
-                        <form id="material-form" class="space-y-4">
-                            <div>
-                                <label for="material-name" class="block text-sm font-semibold text-slate-700 mb-1.5">Material / Filamento</label>
-                                <input type="text" id="material-name" required placeholder="Ex: PLA Preto 1kg" 
-                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 outline-none transition-all bg-slate-50 focus:bg-white">
-                            </div>
-                            <div>
-                                <label for="material-cost" class="block text-sm font-semibold text-slate-700 mb-1.5">Custo Pago (R$)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-3 text-slate-500 font-medium pointer-events-none">R$</span>
-                                    <input type="number" id="material-cost" required min="0.01" step="0.01" placeholder="0,00" 
-                                        class="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 outline-none transition-all">
-                                </div>
-                            </div>
-                            <button type="submit" id="submit-material-btn" disabled
-                                class="w-full mt-2 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
-                                <i data-lucide="plus" class="w-5 h-5"></i>
-                                Registrar Material
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Lista de Materiais -->
-                <div class="lg:col-span-2">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full">
-                        <div class="p-5 border-b border-slate-100 flex items-center bg-slate-50">
-                            <h2 class="text-lg font-bold text-slate-800">Estoque / Materiais Registrados</h2>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse whitespace-nowrap">
-                                <thead>
-                                    <tr class="bg-white border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-                                        <th class="px-6 py-3 font-semibold">Data</th>
-                                        <th class="px-6 py-3 font-semibold">Material / Filamento</th>
-                                        <th class="px-6 py-3 font-semibold text-right">Custo Pago</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="materials-table-body" class="divide-y divide-slate-100 text-sm">
-                                    <tr id="empty-state-materials">
-                                        <td colspan="3" class="px-6 py-10 text-center text-slate-400">Nenhum material registrado.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Modal de Feedback -->
-    <div id="toast-modal" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 z-50 pointer-events-none">
-        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
-        <span class="font-medium" id="toast-message">Ação realizada!</span>
     </div>
 
+    <!-- Scripts do Firebase e Lógica -->
     <script type="module">
-        lucide.createIcons();
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Variáveis de Estado Globais para o Dashboard
-        let globalOrders = [];
-        let globalMaterials = [];
-
-        // Gerenciamento de Abas
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            
-            const tabs = [
-                { id: 'tab-new', btn: 'btn-tab-new', color: 'text-blue-700' },
-                { id: 'tab-list', btn: 'btn-tab-list', color: 'text-blue-700' },
-                { id: 'tab-materials', btn: 'btn-tab-materials', color: 'text-purple-700' }
-            ];
-
-            tabs.forEach(t => {
-                const btn = document.getElementById(t.btn);
-                if(t.id === tabId) {
-                    btn.className = `px-5 py-2.5 rounded-t-lg bg-white ${t.color} font-bold text-sm transition-colors flex items-center gap-2 border-t border-x border-slate-200 border-b-transparent relative top-[1px] whitespace-nowrap`;
-                } else {
-                    btn.className = "px-5 py-2.5 rounded-t-lg text-blue-100 hover:bg-blue-600 hover:text-white font-medium text-sm transition-colors flex items-center gap-2 border-t border-x border-transparent whitespace-nowrap";
-                }
-            });
-        }
-        window.switchTab('tab-new');
-
-
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-3d-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let app, db, auth, userId, ordersCollectionRef, materialsCollectionRef;
-
-        // Elementos da UI
-        const orderForm = document.getElementById('order-form');
-        const submitOrderBtn = document.getElementById('submit-btn');
-        const materialForm = document.getElementById('material-form');
-        const submitMaterialBtn = document.getElementById('submit-material-btn');
-        const statusBadge = document.getElementById('status-badge');
-        
-        // Elementos do Dashboard
-        const dashTotalPurchases = document.getElementById('dash-total-purchases');
-        const dashTotalFabrication = document.getElementById('dash-total-fabrication');
-        const dashTotalLabor = document.getElementById('dash-total-labor');
-        const dashTotalRevenue = document.getElementById('dash-total-revenue');
-        
-        // Tabelas
-        const ordersTableBody = document.getElementById('orders-table-body');
-        const materialsTableBody = document.getElementById('materials-table-body');
-
-        // Inputs Pedido
-        const weightInput = document.getElementById('weight-grams');
-        const laborInput = document.getElementById('labor-cost');
-        const previewMatCost = document.getElementById('preview-material-cost');
-        const previewLabCost = document.getElementById('preview-labor-cost');
-        const previewTotal = document.getElementById('preview-total-value');
-
-        const COST_PER_GRAM = 0.1;
-
-        // Helpers
-        const formatCurrency = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const formatDate = (timestamp) => {
-            if (!timestamp) return 'Recente';
-            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return date.toLocaleDateString('pt-BR');
+        // A SUA CONFIGURAÇÃO DO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCH9mpe9ZoRMMLI3zR8p8ALVrQlqAQpjXo",
+            authDomain: "pedidos-3d-1332d.firebaseapp.com",
+            projectId: "pedidos-3d-1332d",
+            storageBucket: "pedidos-3d-1332d.firebasestorage.app",
+            messagingSenderId: "34746957320",
+            appId: "1:34746957320:web:5df1ec0606097d3de3dbbd",
+            measurementId: "G-Z91S74W0CE"
         };
-        
-        function showToast(msg) {
-            const toast = document.getElementById('toast-modal');
-            document.getElementById('toast-message').textContent = msg;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
-        }
 
-        function calculateRealTime() {
-            const weight = parseFloat(weightInput.value) || 0;
-            const labor = parseFloat(laborInput.value) || 0;
-            const materialCost = weight * COST_PER_GRAM;
-            const total = materialCost + labor;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            previewMatCost.textContent = formatCurrency(materialCost);
-            previewLabCost.textContent = formatCurrency(labor);
-            previewTotal.textContent = formatCurrency(total);
-        }
+        // Controlos de UI
+        const statusBadge = document.getElementById('status-badge');
+        const btnSalvarPedido = document.getElementById('btn-salvar-pedido');
+        const btnSalvarMaterial = document.getElementById('btn-salvar-material');
 
-        weightInput.addEventListener('input', calculateRealTime);
-        laborInput.addEventListener('input', calculateRealTime);
+        // Formatar dinheiro (Reais)
+        const formatarMoeda = (valor) => {
+            return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        };
 
-        // Atualiza Dashboard Consolidado
-        function updateDashboard() {
-            // Soma dos Materiais Comprados
-            const totalPurchases = globalMaterials.reduce((acc, curr) => acc + (curr.cost || 0), 0);
+        // Formatar data
+        const formatarData = (timestamp) => {
+            if (!timestamp) return 'Agora';
+            const data = timestamp.toDate();
+            return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        };
+
+        // Cálculo em tempo real no formulário
+        window.calcularPrevia = function() {
+            const peso = parseFloat(document.getElementById('peso').value) || 0;
+            const maoObra = parseFloat(document.getElementById('mao-obra').value) || 0;
             
-            // Somas dos Pedidos
-            let totalFabrication = 0;
-            let totalLabor = 0;
-            let totalRevenue = 0;
-
-            globalOrders.forEach(order => {
-                const mat = order.materialCost || (order.weight ? order.weight * COST_PER_GRAM : 0);
-                const lab = order.laborCost || 0;
-                const tot = order.totalValue || (mat + lab);
-                
-                totalFabrication += mat;
-                totalLabor += lab;
-                totalRevenue += tot;
-            });
-
-            dashTotalPurchases.textContent = formatCurrency(totalPurchases);
-            dashTotalFabrication.textContent = formatCurrency(totalFabrication);
-            dashTotalLabor.textContent = formatCurrency(totalLabor);
-            dashTotalRevenue.textContent = formatCurrency(totalRevenue);
+            const custoMaterial = peso * 0.1;
+            const total = custoMaterial + maoObra;
+            
+            document.getElementById('previa-material').textContent = formatarMoeda(custoMaterial);
+            document.getElementById('previa-total').textContent = formatarMoeda(total);
         }
 
-        // Atualiza Tabela de Pedidos
-        function renderOrders() {
-            if (globalOrders.length === 0) {
-                ordersTableBody.innerHTML = `
-                    <tr id="empty-state-orders">
-                        <td colspan="7" class="px-6 py-16 text-center text-slate-400">
-                            <div class="flex flex-col items-center gap-2">
-                                <i data-lucide="inbox" class="w-10 h-10 text-slate-300"></i>
-                                <span>Nenhum pedido registrado ainda.</span>
-                            </div>
-                        </td>
-                    </tr>`;
-                lucide.createIcons();
-                return;
-            }
-
-            ordersTableBody.innerHTML = ''; 
-            globalOrders.forEach(order => {
-                const mat = order.materialCost || (order.weight ? order.weight * COST_PER_GRAM : 0);
-                const lab = order.laborCost || 0;
-                const tot = order.totalValue || (mat + lab);
-                const dateStr = formatDate(order.createdAt);
-
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-none';
-                tr.innerHTML = `
-                    <td class="px-6 py-4 text-slate-500">${dateStr}</td>
-                    <td class="px-6 py-4 font-bold text-slate-800">${order.clientName || '-'}</td>
-                    <td class="px-6 py-4 text-slate-600">${order.productName || '-'}</td>
-                    <td class="px-6 py-4 text-right">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
-                            ${(order.weight || 0).toLocaleString('pt-BR')}g
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-right text-rose-600 font-medium">${formatCurrency(mat)}</td>
-                    <td class="px-6 py-4 text-right text-amber-600 font-medium">${formatCurrency(lab)}</td>
-                    <td class="px-6 py-4 text-right font-bold text-blue-700 bg-blue-50/30">${formatCurrency(tot)}</td>
-                `;
-                ordersTableBody.appendChild(tr);
-            });
+        // Trocar Abas
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
         }
 
-        // Atualiza Tabela de Materiais Comprados
-        function renderMaterials() {
-            if (globalMaterials.length === 0) {
-                materialsTableBody.innerHTML = `
-                    <tr id="empty-state-materials">
-                        <td colspan="3" class="px-6 py-12 text-center text-slate-400">
-                            <div class="flex flex-col items-center gap-2">
-                                <i data-lucide="package-open" class="w-8 h-8 text-slate-300"></i>
-                                <span>Nenhum material registrado.</span>
-                            </div>
-                        </td>
-                    </tr>`;
-                lucide.createIcons();
-                return;
-            }
-
-            materialsTableBody.innerHTML = ''; 
-            globalMaterials.forEach(item => {
-                const dateStr = formatDate(item.createdAt);
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-none';
-                tr.innerHTML = `
-                    <td class="px-6 py-4 text-slate-500">${dateStr}</td>
-                    <td class="px-6 py-4 font-semibold text-slate-800">${item.name}</td>
-                    <td class="px-6 py-4 text-right font-medium text-purple-700">${formatCurrency(item.cost || 0)}</td>
-                `;
-                materialsTableBody.appendChild(tr);
-            });
-        }
-
-        async function initApp() {
-            try {
-                if (Object.keys(firebaseConfig).length === 0) throw new Error("Config Firebase ausente.");
-
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                if (initialToken) {
-                    await signInWithCustomToken(auth, initialToken);
-                } else {
-                    await signInAnonymously(auth);
+        // Funções de Eliminar
+        window.deletarPedido = async function(id) {
+            if(confirm("Tem a certeza que deseja eliminar este pedido? Esta ação não pode ser desfeita.")) {
+                try {
+                    await deleteDoc(doc(db, "pedidos", id));
+                } catch (e) {
+                    console.error("Erro ao eliminar: ", e);
+                    alert("Erro ao eliminar o pedido.");
                 }
-
-                if (!auth.currentUser) throw new Error("Falha de autenticação.");
-                userId = auth.currentUser.uid;
-                
-                ordersCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'orders');
-                materialsCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'materials');
-
-                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Conectado`;
-                statusBadge.classList.replace('bg-blue-800', 'bg-emerald-600');
-                submitOrderBtn.disabled = false;
-                submitMaterialBtn.disabled = false;
-
-                loadData();
-
-            } catch (error) {
-                console.error("Erro Firebase:", error);
-                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span> Offline`;
-                statusBadge.classList.replace('bg-blue-800', 'bg-rose-600');
             }
         }
 
-        function loadData() {
-            if (!userId) return;
-
-            // Escuta Pedidos
-            onSnapshot(query(ordersCollectionRef), (snapshot) => {
-                globalOrders = [];
-                snapshot.forEach((doc) => {
-                    globalOrders.push({ id: doc.id, ...doc.data() });
-                });
-                globalOrders.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-                
-                renderOrders();
-                updateDashboard();
-            }, (error) => console.error("Erro Orders:", error));
-
-            // Escuta Materiais Comprados
-            onSnapshot(query(materialsCollectionRef), (snapshot) => {
-                globalMaterials = [];
-                snapshot.forEach((doc) => {
-                    globalMaterials.push({ id: doc.id, ...doc.data() });
-                });
-                globalMaterials.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-                
-                renderMaterials();
-                updateDashboard();
-            }, (error) => console.error("Erro Materials:", error));
+        window.deletarMaterial = async function(id) {
+            if(confirm("Tem a certeza que deseja eliminar este material? Esta ação não pode ser desfeita.")) {
+                try {
+                    await deleteDoc(doc(db, "materiais", id));
+                } catch (e) {
+                    console.error("Erro ao eliminar: ", e);
+                    alert("Erro ao eliminar o material.");
+                }
+            }
         }
 
-        // Salvar Pedido
-        orderForm.addEventListener('submit', async (e) => {
+        // Salvar Novo Pedido
+        document.getElementById('form-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!userId) return;
+            btnSalvarPedido.disabled = true;
+            btnSalvarPedido.textContent = 'A guardar...';
 
-            const clientName = document.getElementById('client-name').value.trim();
-            const productName = document.getElementById('product-name').value.trim();
-            const weight = parseFloat(weightInput.value);
-            const laborCost = parseFloat(laborInput.value) || 0;
-
-            if (!clientName || !productName || isNaN(weight) || weight <= 0) return;
-
-            const materialCost = weight * COST_PER_GRAM;
-            const totalValue = materialCost + laborCost;
+            const peso = parseFloat(document.getElementById('peso').value);
+            const maoObra = parseFloat(document.getElementById('mao-obra').value);
+            const custoMaterial = peso * 0.1;
+            const valorTotal = custoMaterial + maoObra;
 
             try {
-                submitOrderBtn.disabled = true;
-                submitOrderBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Registrando...`;
-                lucide.createIcons();
-
-                await addDoc(ordersCollectionRef, {
-                    clientName,
-                    productName,
-                    weight,
-                    laborCost,
-                    materialCost,
-                    totalValue,
-                    createdAt: serverTimestamp()
+                await addDoc(collection(db, "pedidos"), {
+                    cliente: document.getElementById('cliente').value,
+                    produto: document.getElementById('produto').value,
+                    peso: peso,
+                    mao_obra: maoObra,
+                    custo_material: custoMaterial,
+                    valor_total: valorTotal,
+                    data: serverTimestamp()
                 });
-
-                orderForm.reset();
-                calculateRealTime();
-                showToast("Pedido registrado com sucesso!");
-                setTimeout(() => window.switchTab('tab-list'), 800);
-
-            } catch (error) {
-                console.error("Erro ao salvar pedido:", error);
+                document.getElementById('form-pedido').reset();
+                calcularPrevia();
+                alert("Pedido registado com sucesso!");
+                switchTab('tab-lista-pedidos');
+            } catch (e) {
+                console.error("Erro: ", e);
+                alert("Erro ao guardar pedido. Verifique a base de dados.");
             } finally {
-                submitOrderBtn.disabled = false;
-                submitOrderBtn.innerHTML = `<i data-lucide="save" class="w-5 h-5"></i> Registrar Pedido`;
-                lucide.createIcons();
+                btnSalvarPedido.disabled = false;
+                btnSalvarPedido.textContent = 'Registar Pedido';
             }
         });
 
-        // Salvar Material
-        materialForm.addEventListener('submit', async (e) => {
+        // Salvar Novo Material
+        document.getElementById('form-material').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!userId) return;
+            btnSalvarMaterial.disabled = true;
+            btnSalvarMaterial.textContent = 'A guardar...';
 
-            const name = document.getElementById('material-name').value.trim();
-            const cost = parseFloat(document.getElementById('material-cost').value);
-
-            if (!name || isNaN(cost) || cost <= 0) return;
+            const custoPago = parseFloat(document.getElementById('custo-material').value);
 
             try {
-                submitMaterialBtn.disabled = true;
-                submitMaterialBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Registrando...`;
-                lucide.createIcons();
-
-                await addDoc(materialsCollectionRef, {
-                    name,
-                    cost,
-                    createdAt: serverTimestamp()
+                await addDoc(collection(db, "materiais"), {
+                    nome: document.getElementById('nome-material').value,
+                    custo: custoPago,
+                    data: serverTimestamp()
                 });
-
-                materialForm.reset();
-                showToast("Material adicionado ao estoque!");
-
-            } catch (error) {
-                console.error("Erro ao salvar material:", error);
+                document.getElementById('form-material').reset();
+                alert("Material registado com sucesso!");
+            } catch (e) {
+                console.error("Erro: ", e);
+                alert("Erro ao guardar material.");
             } finally {
-                submitMaterialBtn.disabled = false;
-                submitMaterialBtn.innerHTML = `<i data-lucide="plus" class="w-5 h-5"></i> Registrar Material`;
-                lucide.createIcons();
+                btnSalvarMaterial.disabled = false;
+                btnSalvarMaterial.textContent = 'Registar Material';
             }
         });
 
-        initApp();
+        // Ouvinte em Tempo Real para Pedidos
+        const qPedidos = query(collection(db, "pedidos"), orderBy("data", "desc"));
+        onSnapshot(qPedidos, (snapshot) => {
+            statusBadge.textContent = 'Online';
+            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-bold bg-green-500 text-white';
+            btnSalvarPedido.disabled = false;
+            btnSalvarPedido.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            const tbody = document.getElementById('tabela-pedidos');
+            tbody.innerHTML = '';
+            
+            let totalCustoFabricacao = 0;
+            let totalMaoDeObra = 0;
+            let faturamentoTotal = 0;
+
+            if (snapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-gray-500">Nenhum pedido registado ainda.</td></tr>';
+                
+                document.getElementById('dash-fabricacao').textContent = formatarMoeda(0);
+                document.getElementById('dash-maodeobra').textContent = formatarMoeda(0);
+                document.getElementById('dash-faturamento').textContent = formatarMoeda(0);
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const p = doc.data();
+                
+                const nomeCliente = p.cliente || "Não informado";
+                const nomeProduto = p.produto || "Não informado";
+                const peso = p.peso || (p.gramas || 0); 
+                const maoObra = p.mao_obra || 0;
+                const custoMat = p.custo_material || (peso * 0.1);
+                const valorTot = p.valor_total || (custoMat + maoObra);
+
+                totalCustoFabricacao += custoMat;
+                totalMaoDeObra += maoObra;
+                faturamentoTotal += valorTot;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-gray-600">${formatarData(p.data)}</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">${nomeCliente}</td>
+                    <td class="px-4 py-3 text-gray-600">${nomeProduto}</td>
+                    <td class="px-4 py-3 text-right text-gray-600">${peso}g</td>
+                    <td class="px-4 py-3 text-right text-gray-600">${formatarMoeda(custoMat)}</td>
+                    <td class="px-4 py-3 text-right text-gray-600">${formatarMoeda(maoObra)}</td>
+                    <td class="px-4 py-3 text-right font-bold text-gray-800">${formatarMoeda(valorTot)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="deletarPedido('${doc.id}')" class="text-red-500 hover:text-red-700 transition" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Atualizar Dashboard
+            document.getElementById('dash-fabricacao').textContent = formatarMoeda(totalCustoFabricacao);
+            document.getElementById('dash-maodeobra').textContent = formatarMoeda(totalMaoDeObra);
+            document.getElementById('dash-faturamento').textContent = formatarMoeda(faturamentoTotal);
+        }, (error) => {
+            console.log(error);
+            statusBadge.textContent = 'Offline';
+            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-bold bg-red-500 text-white';
+        });
+
+        // Ouvinte em Tempo Real para Materiais
+        const qMateriais = query(collection(db, "materiais"), orderBy("data", "desc"));
+        onSnapshot(qMateriais, (snapshot) => {
+            btnSalvarMaterial.disabled = false;
+            btnSalvarMaterial.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            const tbody = document.getElementById('tabela-materiais');
+            tbody.innerHTML = '';
+            
+            let totalGastoCompras = 0;
+
+            if (snapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">Nenhum material registado.</td></tr>';
+                document.getElementById('dash-compras').textContent = formatarMoeda(0);
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const m = doc.data();
+                const custo = m.custo || 0;
+                totalGastoCompras += custo;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-gray-600">${formatarData(m.data)}</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">${m.nome || "Não informado"}</td>
+                    <td class="px-4 py-3 text-right font-bold text-gray-800">${formatarMoeda(custo)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="deletarMaterial('${doc.id}')" class="text-red-500 hover:text-red-700 transition" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Atualizar Dashboard
+            document.getElementById('dash-compras').textContent = formatarMoeda(totalGastoCompras);
+        });
     </script>
 </body>
 </html>

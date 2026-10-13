@@ -309,31 +309,6 @@
             }
         });
 
-        // Salvar Novo Material
-        document.getElementById('form-material').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            btnSalvarMaterial.disabled = true;
-            btnSalvarMaterial.textContent = 'A guardar...';
-
-            const custoPago = parseFloat(document.getElementById('custo-material').value);
-
-            try {
-                await addDoc(collection(db, "materiais"), {
-                    nome: document.getElementById('nome-material').value,
-                    custo: custoPago,
-                    data: serverTimestamp()
-                });
-                document.getElementById('form-material').reset();
-                alert("Material registado com sucesso!");
-            } catch (e) {
-                console.error("Erro: ", e);
-                alert("Erro ao guardar material.");
-            } finally {
-                btnSalvarMaterial.disabled = false;
-                btnSalvarMaterial.textContent = 'Registar Material';
-            }
-        });
-
         // Ouvinte em Tempo Real para Pedidos
         const qPedidos = query(collection(db, "pedidos"), orderBy("data", "desc"));
         onSnapshot(qPedidos, (snapshot) => {
@@ -373,7 +348,8 @@
                 const valorTot = p.valor_total || (custoMat + maoObra + custoHoras);
 
                 totalCustoFabricacao += custoMat;
-                totalMaoDeObra += maoObra;
+                // ALTERAÇÃO FEITA AQUI: Agora soma Mão de Obra + Custo das Horas da Máquina
+                totalMaoDeObra += (maoObra + custoHoras); 
                 faturamentoTotal += valorTot;
 
                 const tr = document.createElement('tr');

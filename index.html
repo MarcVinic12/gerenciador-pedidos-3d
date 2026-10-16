@@ -1,426 +1,446 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print Manager 3D</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .tab-btn.active { background-color: #f3f4f6; color: #2563eb; font-weight: bold; border-bottom: 2px solid #2563eb; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Print Manager 3D</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style type="text/tailwindcss">
+@layer components {
+  .inp { @apply mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500; }
+  .lbl { @apply block text-sm font-medium text-gray-700; }
+  .card { @apply bg-white p-5 rounded-lg shadow-sm border border-gray-200; }
+  .btn { @apply bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed; }
+  .th { @apply px-3 py-3 text-gray-600 text-left; }
+  .td { @apply px-3 py-2 text-gray-600; }
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.tab-btn.active { background: #f3f4f6; color: #2563eb; font-weight: 700; border-bottom: 2px solid #2563eb; }
+</style>
 </head>
 <body class="bg-slate-50 min-h-screen">
-    
-    <!-- Cabeçalho -->
-    <header class="bg-blue-600 text-white p-4 shadow-md">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold"><i class="fas fa-cube mr-2"></i> Print Manager 3D</h1>
-            <div id="status-badge" class="px-3 py-1 rounded-full text-sm font-bold bg-yellow-500 text-white">
-                A Ligar...
-            </div>
-        </div>
-    </header>
 
-    <!-- Dashboard (Sempre Visível) -->
-    <div class="max-w-6xl mx-auto p-4 mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
-            <p class="text-sm text-gray-500"><i class="fas fa-shopping-bag mr-1"></i> Gasto com Compras</p>
-            <p class="text-2xl font-bold text-gray-800" id="dash-compras">R$ 0,00</p>
+<!-- LOGIN -->
+<div id="login" class="hidden min-h-screen flex items-center justify-center p-4">
+  <form id="f-login" class="card w-full max-w-sm space-y-3">
+    <h1 class="text-2xl font-bold text-blue-700"><i class="fas fa-cube mr-2"></i>Print Manager 3D</h1>
+    <div><label class="lbl">E-mail</label><input id="l-email" type="email" required autocomplete="username" class="inp"></div>
+    <div><label class="lbl">Senha</label><input id="l-senha" type="password" required autocomplete="current-password" class="inp"></div>
+    <p id="l-erro" class="text-sm text-red-600"></p>
+    <button class="btn w-full">Entrar</button>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header class="bg-blue-600 text-white p-4 shadow-md">
+    <div class="max-w-6xl mx-auto flex justify-between items-center gap-3">
+      <h1 class="text-xl md:text-2xl font-bold"><i class="fas fa-cube mr-2"></i>Print Manager 3D</h1>
+      <div class="flex items-center gap-3 text-sm">
+        <span id="status-badge" class="px-3 py-1 rounded-full font-bold bg-yellow-500">Conectando...</span>
+        <span id="user-email" class="hidden md:inline opacity-80"></span>
+        <button id="btn-sair" class="underline">Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Período + Dashboard -->
+  <div class="max-w-6xl mx-auto px-4 mt-4">
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <label for="f-mes">Período do painel:</label>
+      <input id="f-mes" type="month" class="rounded-md border border-gray-300 p-1">
+      <button id="f-mes-limpar" class="text-blue-600 underline">Tudo</button>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3">
+      <div class="card !p-4"><p class="text-sm text-gray-500">Faturamento</p><p class="text-xl font-bold" id="d-fat">R$ 0,00</p></div>
+      <div class="card !p-4"><p class="text-sm text-gray-500">Recebido</p><p class="text-xl font-bold text-green-700" id="d-rec">R$ 0,00</p></div>
+      <div class="card !p-4"><p class="text-sm text-gray-500">A receber</p><p class="text-xl font-bold text-amber-600" id="d-areceber">R$ 0,00</p></div>
+      <div class="card !p-4"><p class="text-sm text-gray-500">Compras de material</p><p class="text-xl font-bold" id="d-compras">R$ 0,00</p></div>
+      <div class="card !p-4 !bg-blue-50 !border-blue-100"><p class="text-sm text-blue-600 font-semibold">Lucro (recebido − compras)</p><p class="text-2xl font-bold text-blue-700" id="d-lucro">R$ 0,00</p><p class="text-xs text-blue-600" id="d-margem">margem 0%</p></div>
+    </div>
+  </div>
+
+  <!-- Abas -->
+  <div class="max-w-6xl mx-auto mt-4 px-4">
+    <div class="flex space-x-1 border-b border-gray-200 overflow-x-auto whitespace-nowrap">
+      <button data-tab="novo" class="tab-btn active px-4 py-2 text-gray-600 rounded-t-lg"><i class="fas fa-plus-circle mr-1"></i>Pedido</button>
+      <button data-tab="lista" class="tab-btn px-4 py-2 text-gray-600 rounded-t-lg"><i class="fas fa-list mr-1"></i>Meus pedidos</button>
+      <button data-tab="materiais" class="tab-btn px-4 py-2 text-gray-600 rounded-t-lg"><i class="fas fa-shopping-cart mr-1"></i>Materiais</button>
+      <button data-tab="ajustes" class="tab-btn px-4 py-2 text-gray-600 rounded-t-lg"><i class="fas fa-sliders-h mr-1"></i>Ajustes</button>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto p-4 mb-10">
+
+    <!-- Pedido -->
+    <div id="tab-novo" class="tab-content active card">
+      <h2 id="titulo-form" class="text-xl font-bold mb-4 text-gray-700">Novo pedido</h2>
+      <form id="form-pedido" class="space-y-4 max-w-4xl">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="lbl">Cliente</label><input id="cliente" required class="inp"></div>
+          <div><label class="lbl">Produto / peça</label><input id="produto" required class="inp"></div>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
-            <p class="text-sm text-gray-500"><i class="fas fa-tint mr-1"></i> Custo de Fabricação</p>
-            <p class="text-2xl font-bold text-gray-800" id="dash-fabricacao">R$ 0,00</p>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div><label class="lbl">Quantidade</label><input type="number" id="qtd" min="1" step="1" value="1" required class="inp"></div>
+          <div><label class="lbl">Peso por peça (g)</label><input type="number" id="peso" min="0" step="0.1" required class="inp"></div>
+          <div><label class="lbl">Horas por peça</label><input type="number" id="horas" min="0" step="0.1" required class="inp"></div>
+          <div><label class="lbl">Hora-máquina (R$)</label><input type="number" id="valor-hora" min="0" step="0.01" required class="inp"></div>
+          <div><label class="lbl">Mão de obra total (R$)</label><input type="number" id="mao-obra" min="0" step="0.01" value="0" required class="inp"></div>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
-            <p class="text-sm text-gray-500"><i class="fas fa-wrench mr-1"></i> Total Mão de Obra</p>
-            <p class="text-2xl font-bold text-gray-800" id="dash-maodeobra">R$ 0,00</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div><label class="lbl">Desconto (R$)</label><input type="number" id="desconto" min="0" step="0.01" value="0" class="inp"></div>
+          <div><label class="lbl">Status</label>
+            <select id="status" class="inp"><option>Orçamento</option><option>Em produção</option><option>Pronto</option><option>Entregue</option><option>Cancelado</option></select></div>
+          <div><label class="lbl">Entrega</label><input type="date" id="entrega" class="inp"></div>
+          <label class="flex items-center gap-2 mt-7 text-sm font-medium text-gray-700"><input type="checkbox" id="pago" class="h-5 w-5"> Pago</label>
         </div>
-        <div class="bg-blue-50 p-4 rounded-lg shadow border border-blue-100">
-            <p class="text-sm text-blue-600 font-semibold">FATURAMENTO (PEDIDOS)</p>
-            <p class="text-3xl font-bold text-blue-700" id="dash-faturamento">R$ 0,00</p>
+        <div><label class="lbl">Observações (cor, material, link do arquivo...)</label><input id="obs" class="inp"></div>
+
+        <div class="bg-gray-50 p-4 rounded-md border border-gray-200 text-sm text-gray-600 space-y-1">
+          <p>Custo do material (<span id="p-cg">R$ 0,000</span>/g + perda): <b id="p-mat" class="text-gray-800">R$ 0,00</b></p>
+          <p>Custo de máquina: <b id="p-maq" class="text-gray-800">R$ 0,00</b></p>
+          <p class="text-lg text-gray-800 pt-2 border-t border-gray-300">Valor a cobrar: <b id="p-total" class="text-blue-600 text-2xl">R$ 0,00</b></p>
         </div>
+        <div class="flex gap-2">
+          <button type="submit" id="btn-salvar-pedido" class="btn flex-1 py-3" disabled>Salvar pedido</button>
+          <button type="button" id="btn-cancelar-edicao" class="hidden px-4 rounded border border-gray-300 text-gray-700">Cancelar edição</button>
+        </div>
+      </form>
     </div>
 
-    <!-- Navegação das Abas -->
-    <div class="max-w-6xl mx-auto mt-4 px-4">
-        <div class="flex space-x-2 border-b border-gray-200">
-            <button onclick="switchTab('tab-novo-pedido')" class="tab-btn active px-4 py-2 text-gray-600 rounded-t-lg transition-colors">
-                <i class="fas fa-plus-circle mr-1"></i> Novo Pedido
-            </button>
-            <button onclick="switchTab('tab-lista-pedidos')" class="tab-btn px-4 py-2 text-gray-600 rounded-t-lg transition-colors">
-                <i class="fas fa-list mr-1"></i> Meus Pedidos
-            </button>
-            <button onclick="switchTab('tab-materiais')" class="tab-btn px-4 py-2 text-gray-600 rounded-t-lg transition-colors">
-                <i class="fas fa-shopping-cart mr-1"></i> Materiais Comprados
-            </button>
-        </div>
+    <!-- Lista -->
+    <div id="tab-lista" class="tab-content card">
+      <div class="flex flex-wrap gap-2 items-end mb-4">
+        <h2 class="text-xl font-bold text-gray-700 mr-auto">Histórico de pedidos</h2>
+        <input id="f-busca" placeholder="Buscar cliente ou produto" class="rounded-md border border-gray-300 p-2 text-sm">
+        <select id="f-status" class="rounded-md border border-gray-300 p-2 text-sm"><option value="">Todos os status</option><option>Orçamento</option><option>Em produção</option><option>Pronto</option><option>Entregue</option><option>Cancelado</option></select>
+        <button id="btn-csv" class="rounded border border-gray-300 px-3 py-2 text-sm"><i class="fas fa-file-csv mr-1"></i>Exportar CSV</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm whitespace-nowrap">
+          <thead class="border-b-2 border-gray-200 bg-gray-50"><tr>
+            <th class="th">Data</th><th class="th">Cliente</th><th class="th">Produto</th><th class="th text-right">Qtd</th>
+            <th class="th text-right">Material</th><th class="th text-right">Máquina</th><th class="th text-right">Mão de obra</th>
+            <th class="th text-right text-gray-800">Total</th><th class="th">Status</th><th class="th">Pago</th><th class="th text-center">Ações</th>
+          </tr></thead>
+          <tbody id="tb-pedidos" class="divide-y divide-gray-200"><tr><td colspan="11" class="td text-center py-8">Carregando pedidos...</td></tr></tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Conteúdo das Abas -->
-    <div class="max-w-6xl mx-auto p-4 mb-10">
-        
-        <!-- ABA: Novo Pedido -->
-        <div id="tab-novo-pedido" class="tab-content active bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 class="text-xl font-bold mb-4 text-gray-700">Registar Novo Pedido</h2>
-            <form id="form-pedido" class="space-y-4 max-w-4xl">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Nome do Cliente</label>
-                        <input type="text" id="cliente" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Produto / Peça</label>
-                        <input type="text" id="produto" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Peso Gasto (Gramas)</label>
-                        <input type="number" id="peso" step="0.1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" oninput="calcularPrevia()">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Valor Mão de Obra (R$)</label>
-                        <input type="number" id="mao-obra" step="0.01" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" oninput="calcularPrevia()">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Horas de Impressão</label>
-                        <input type="number" id="horas" step="0.1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" oninput="calcularPrevia()">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Valor da Hora Máquina (R$)</label>
-                        <select id="valor-hora" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" onchange="calcularPrevia()">
-                            <option value="2.00">R$ 2,00</option>
-                            <option value="2.50">R$ 2,50</option>
-                            <option value="3.00">R$ 3,00</option>
-                            <option value="3.50">R$ 3,50</option>
-                            <option value="4.00">R$ 4,00</option>
-                            <option value="4.50">R$ 4,50</option>
-                            <option value="5.00">R$ 5,00</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 p-4 rounded-md border border-gray-200 mt-4">
-                    <p class="text-sm text-gray-600">Custo do Material (0,115/g): <span id="previa-material" class="font-bold text-gray-800">R$ 0,00</span></p>
-                    <p class="text-sm text-gray-600">Custo de Máquina (Horas x Valor): <span id="previa-horas" class="font-bold text-gray-800">R$ 0,00</span></p>
-                    <p class="text-lg text-gray-800 mt-2 border-t pt-2 border-gray-300">Valor Total a Cobrar: <span id="previa-total" class="font-bold text-blue-600 text-2xl">R$ 0,00</span></p>
-                </div>
-
-                <button type="submit" id="btn-salvar-pedido" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded hover:bg-blue-700 transition opacity-50 cursor-not-allowed" disabled>
-                    Registar Pedido
-                </button>
-            </form>
+    <!-- Materiais -->
+    <div id="tab-materiais" class="tab-content">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card md:col-span-1 h-fit">
+          <h2 class="text-lg font-bold mb-4 text-gray-700">Nova compra</h2>
+          <form id="form-material" class="space-y-4">
+            <div><label class="lbl">Material / filamento</label><input id="m-nome" placeholder="Ex: PLA preto 1kg" required class="inp"></div>
+            <div><label class="lbl">Peso comprado (g)</label><input id="m-peso" type="number" min="1" step="1" value="1000" required class="inp"></div>
+            <div><label class="lbl">Custo pago (R$)</label><input id="m-custo" type="number" min="0" step="0.01" required class="inp"></div>
+            <button type="submit" id="btn-salvar-material" class="btn w-full" disabled>Salvar compra</button>
+          </form>
         </div>
-
-        <!-- ABA: Lista de Pedidos -->
-        <div id="tab-lista-pedidos" class="tab-content bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 class="text-xl font-bold mb-4 text-gray-700">Histórico de Pedidos</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-left text-sm whitespace-nowrap">
-                    <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-gray-600">Data</th>
-                            <th class="px-4 py-3 text-gray-600">Cliente</th>
-                            <th class="px-4 py-3 text-gray-600">Produto</th>
-                            <th class="px-4 py-3 text-gray-600 text-right">Peso (g)</th>
-                            <th class="px-4 py-3 text-gray-600 text-right">Tempo (h)</th>
-                            <th class="px-4 py-3 text-gray-600 text-right">Material</th>
-                            <th class="px-4 py-3 text-gray-600 text-right">Máquina</th>
-                            <th class="px-4 py-3 text-gray-600 text-right">Mão de Obra</th>
-                            <th class="px-4 py-3 text-gray-800 font-bold text-right">Total</th>
-                            <th class="px-4 py-3 text-gray-600 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-pedidos" class="divide-y divide-gray-200">
-                        <tr><td colspan="10" class="px-4 py-8 text-center text-gray-500">A carregar pedidos...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="card md:col-span-2">
+          <h2 class="text-lg font-bold text-gray-700">Compras registradas</h2>
+          <p class="text-sm text-gray-500 mb-3">Custo médio por grama (ponderado pelas compras): <b id="m-medio" class="text-gray-800"></b></p>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm whitespace-nowrap">
+              <thead class="border-b-2 border-gray-200 bg-gray-50"><tr><th class="th">Data</th><th class="th">Material</th><th class="th text-right">Peso</th><th class="th text-right">Custo</th><th class="th text-right">R$/g</th><th class="th text-center">Ações</th></tr></thead>
+              <tbody id="tb-materiais" class="divide-y divide-gray-200"></tbody>
+            </table>
+          </div>
         </div>
-
-        <!-- ABA: Materiais Comprados -->
-        <div id="tab-materiais" class="tab-content grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Formulário Nova Compra -->
-            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 md:col-span-1 h-fit">
-                <h2 class="text-lg font-bold mb-4 text-gray-700"><i class="fas fa-shopping-cart text-purple-500 mr-2"></i>Nova Compra</h2>
-                <form id="form-material" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Material / Filamento</label>
-                        <input type="text" id="nome-material" placeholder="Ex: PLA Preto 1kg" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Custo Pago (R$)</label>
-                        <input type="number" id="custo-material" step="0.01" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
-                    </div>
-                    <button type="submit" id="btn-salvar-material" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 transition opacity-50 cursor-not-allowed" disabled>
-                        Registar Material
-                    </button>
-                </form>
-            </div>
-
-            <!-- Lista de Materiais -->
-            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4 text-gray-700">Estoque / Materiais Registados</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-left text-sm whitespace-nowrap">
-                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-gray-600">Data</th>
-                                <th class="px-4 py-3 text-gray-600">Material / Filamento</th>
-                                <th class="px-4 py-3 text-gray-600 text-right">Custo Pago</th>
-                                <th class="px-4 py-3 text-gray-600 text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-materiais" class="divide-y divide-gray-200">
-                            <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">A carregar materiais...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
+      </div>
     </div>
 
-    <!-- Scripts do Firebase e Lógica -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <!-- Ajustes -->
+    <div id="tab-ajustes" class="tab-content card">
+      <h2 class="text-xl font-bold mb-1 text-gray-700">Ajustes de preço</h2>
+      <p class="text-sm text-gray-500 mb-4">Valem para os próximos pedidos. Pedidos já salvos mantêm o preço calculado na época.</p>
+      <form id="form-cfg" class="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-4xl items-end">
+        <div><label class="lbl">Custo por grama manual (R$)</label><input id="c-cg" type="number" min="0" step="0.001" class="inp"><p class="text-xs text-gray-500 mt-1">Usado só se não houver compras com peso.</p></div>
+        <div><label class="lbl">Perda / falhas / suportes (%)</label><input id="c-perda" type="number" min="0" step="0.5" class="inp"></div>
+        <div><label class="lbl">Margem sobre o custo (%)</label><input id="c-margem" type="number" min="0" step="0.5" class="inp"></div>
+        <div><label class="lbl">Hora-máquina padrão (R$)</label><input id="c-hora" type="number" min="0" step="0.01" class="inp"></div>
+        <button class="btn md:col-span-4 md:w-48">Salvar ajustes</button>
+      </form>
+    </div>
+  </div>
+</div>
 
-        // A SUA CONFIGURAÇÃO DO FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyCH9mpe9ZoRMMLI3zR8p8ALVrQlqAQpjXo",
-            authDomain: "pedidos-3d-1332d.firebaseapp.com",
-            projectId: "pedidos-3d-1332d",
-            storageBucket: "pedidos-3d-1332d.firebasestorage.app",
-            messagingSenderId: "34746957320",
-            appId: "1:34746957320:web:5df1ec0606097d3de3dbbd",
-            measurementId: "G-Z91S74W0CE"
-        };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, setDoc, onSnapshot, query, orderBy, serverTimestamp, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyCH9mpe9ZoRMMLI3zR8p8ALVrQlqAQpjXo",
+  authDomain: "pedidos-3d-1332d.firebaseapp.com",
+  projectId: "pedidos-3d-1332d",
+  storageBucket: "pedidos-3d-1332d.firebasestorage.app",
+  messagingSenderId: "34746957320",
+  appId: "1:34746957320:web:5df1ec0606097d3de3dbbd",
+  measurementId: "G-Z91S74W0CE"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-        // Controlos de UI
-        const statusBadge = document.getElementById('status-badge');
-        const btnSalvarPedido = document.getElementById('btn-salvar-pedido');
-        const btnSalvarMaterial = document.getElementById('btn-salvar-material');
+// ---------- Utilitários ----------
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+const brl = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const num = (id) => parseFloat($(id).value) || 0;
+const sum = (arr, f) => arr.reduce((t, x) => t + (f(x) || 0), 0);
+const fdata = (ts) => ts ? ts.toDate().toLocaleDateString('pt-BR') : 'Agora';
+const inMonth = (ts) => {
+  const m = $('f-mes').value;
+  if (!m || !ts) return true;
+  const d = ts.toDate();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === m;
+};
+const STATUS_COR = { 'Orçamento': 'bg-gray-200 text-gray-700', 'Em produção': 'bg-yellow-100 text-yellow-800', 'Pronto': 'bg-blue-100 text-blue-800', 'Entregue': 'bg-green-100 text-green-800', 'Cancelado': 'bg-red-100 text-red-700' };
+// Pedidos antigos (sem status/pago) contam como entregues e pagos, como já eram no faturamento
+const stOf = (p) => p.status || 'Entregue';
+const pagoOf = (p) => p.pago ?? true;
 
-        // Formatar dinheiro (Reais)
-        const formatarMoeda = (valor) => {
-            return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        };
+// ---------- Estado ----------
+let pedidos = [], materiais = [], unsubs = [], editId = null;
+let cfg = { custo_grama: 0.115, perda: 5, margem: 0, valor_hora: 3 };
 
-        // Formatar data
-        const formatarData = (timestamp) => {
-            if (!timestamp) return 'Agora';
-            const data = timestamp.toDate();
-            return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-        };
+const custoGrama = () => {
+  const mats = materiais.filter((m) => m.peso_g > 0);
+  const g = sum(mats, (m) => m.peso_g);
+  return g > 0 ? sum(mats, (m) => m.custo) / g : cfg.custo_grama;
+};
 
-        // Cálculo em tempo real no formulário
-        window.calcularPrevia = function() {
-            const peso = parseFloat(document.getElementById('peso').value) || 0;
-            const maoObra = parseFloat(document.getElementById('mao-obra').value) || 0;
-            const horas = parseFloat(document.getElementById('horas').value) || 0;
-            const valorHora = parseFloat(document.getElementById('valor-hora').value) || 2;
-            
-            const custoMaterial = peso * 0.115;
-            const custoHoras = horas * valorHora;
-            const total = custoMaterial + custoHoras + maoObra;
-            
-            document.getElementById('previa-material').textContent = formatarMoeda(custoMaterial);
-            document.getElementById('previa-horas').textContent = formatarMoeda(custoHoras);
-            document.getElementById('previa-total').textContent = formatarMoeda(total);
-        }
+// ---------- Cálculo ----------
+function calc() {
+  const q = Math.max(1, num('qtd')), vh = num('valor-hora'), mo = num('mao-obra'), desc = num('desconto');
+  const cg = custoGrama();
+  const material = r2(num('peso') * q * cg * (1 + cfg.perda / 100));
+  const maquina = r2(num('horas') * q * vh);
+  const total = Math.max(0, r2((material + maquina + mo) * (1 + cfg.margem / 100) - desc));
+  return { qtd: q, peso: num('peso'), horas: num('horas'), valor_hora: vh, mao_obra: mo, desconto: desc, custo_grama: cg, custo_material: material, custo_horas: maquina, valor_total: total };
+}
+function previa() {
+  const c = calc();
+  $('p-cg').textContent = 'R$ ' + c.custo_grama.toFixed(3).replace('.', ',');
+  $('p-mat').textContent = brl(c.custo_material);
+  $('p-maq').textContent = brl(c.custo_horas);
+  $('p-total').textContent = brl(c.valor_total);
+}
+['qtd', 'peso', 'horas', 'valor-hora', 'mao-obra', 'desconto'].forEach((id) => $(id).addEventListener('input', previa));
 
-        // Trocar Abas
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
+// ---------- Abas ----------
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach((t) => t.classList.toggle('active', t.id === 'tab-' + id));
+  document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === id));
+}
+document.querySelectorAll('.tab-btn').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
-        // Funções de Eliminar
-        window.deletarPedido = async function(id) {
-            if(confirm("Tem a certeza que deseja eliminar este pedido? Esta ação não pode ser desfeita.")) {
-                try {
-                    await deleteDoc(doc(db, "pedidos", id));
-                } catch (e) {
-                    console.error("Erro ao eliminar: ", e);
-                    alert("Erro ao eliminar o pedido.");
-                }
-            }
-        }
+// ---------- Formulário de pedido ----------
+function limparForm() {
+  editId = null;
+  $('form-pedido').reset();
+  $('valor-hora').value = cfg.valor_hora;
+  $('titulo-form').textContent = 'Novo pedido';
+  $('btn-salvar-pedido').textContent = 'Salvar pedido';
+  $('btn-cancelar-edicao').classList.add('hidden');
+  previa();
+}
+$('btn-cancelar-edicao').addEventListener('click', limparForm);
 
-        window.deletarMaterial = async function(id) {
-            if(confirm("Tem a certeza que deseja eliminar este material? Esta ação não pode ser desfeita.")) {
-                try {
-                    await deleteDoc(doc(db, "materiais", id));
-                } catch (e) {
-                    console.error("Erro ao eliminar: ", e);
-                    alert("Erro ao eliminar o material.");
-                }
-            }
-        }
+function editar(p) {
+  editId = p.id;
+  $('cliente').value = p.cliente || ''; $('produto').value = p.produto || '';
+  $('qtd').value = p.qtd || 1; $('peso').value = p.peso ?? p.gramas ?? 0; $('horas').value = p.horas || 0;
+  $('valor-hora').value = p.valor_hora ?? cfg.valor_hora; $('mao-obra').value = p.mao_obra || 0; $('desconto').value = p.desconto || 0;
+  $('status').value = stOf(p); $('entrega').value = p.entrega || ''; $('pago').checked = pagoOf(p); $('obs').value = p.obs || '';
+  $('titulo-form').textContent = 'Editando pedido de ' + (p.cliente || '');
+  $('btn-salvar-pedido').textContent = 'Salvar alterações';
+  $('btn-cancelar-edicao').classList.remove('hidden');
+  previa(); switchTab('novo'); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-        // Salvar Novo Pedido
-        document.getElementById('form-pedido').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            btnSalvarPedido.disabled = true;
-            btnSalvarPedido.textContent = 'A guardar...';
+$('form-pedido').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('btn-salvar-pedido');
+  btn.disabled = true;
+  const dados = {
+    cliente: $('cliente').value.trim(), produto: $('produto').value.trim(),
+    status: $('status').value, pago: $('pago').checked, entrega: $('entrega').value, obs: $('obs').value.trim(),
+    ...calc()
+  };
+  try {
+    if (editId) await updateDoc(doc(db, 'pedidos', editId), dados);
+    else await addDoc(collection(db, 'pedidos'), { ...dados, data: serverTimestamp() });
+    limparForm();
+    switchTab('lista');
+  } catch (err) {
+    console.error(err);
+    alert('Não foi possível salvar o pedido. Verifique a conexão e as regras do Firestore.');
+  } finally { btn.disabled = false; }
+});
 
-            const peso = parseFloat(document.getElementById('peso').value);
-            const maoObra = parseFloat(document.getElementById('mao-obra').value);
-            const horas = parseFloat(document.getElementById('horas').value);
-            const valorHora = parseFloat(document.getElementById('valor-hora').value);
-            
-            const custoMaterial = peso * 0.115;
-            const custoHoras = horas * valorHora;
-            const valorTotal = custoMaterial + custoHoras + maoObra;
+// ---------- Lista de pedidos ----------
+function pedidosFiltrados() {
+  const b = $('f-busca').value.toLowerCase(), s = $('f-status').value;
+  return pedidos.filter((p) => (!s || stOf(p) === s) && `${p.cliente} ${p.produto}`.toLowerCase().includes(b));
+}
+function renderPedidos() {
+  const lista = pedidosFiltrados();
+  $('tb-pedidos').innerHTML = lista.length ? lista.map((p) => `
+    <tr class="${stOf(p) === 'Cancelado' ? 'opacity-50' : ''}">
+      <td class="td">${fdata(p.data)}${p.entrega ? `<div class="text-xs text-gray-400">entrega ${esc(p.entrega.split('-').reverse().join('/'))}</div>` : ''}</td>
+      <td class="td font-medium text-gray-800">${esc(p.cliente)}</td>
+      <td class="td" title="${esc(p.obs)}">${esc(p.produto)}</td>
+      <td class="td text-right">${p.qtd || 1}</td>
+      <td class="td text-right">${brl(p.custo_material ?? (p.peso || p.gramas || 0) * 0.115)}</td>
+      <td class="td text-right">${brl(p.custo_horas)}</td>
+      <td class="td text-right">${brl(p.mao_obra)}</td>
+      <td class="td text-right font-bold text-gray-800">${brl(p.valor_total)}</td>
+      <td class="td"><span class="px-2 py-1 rounded-full text-xs font-bold ${STATUS_COR[stOf(p)] || ''}">${esc(stOf(p))}</span></td>
+      <td class="td"><button data-act="pago" data-id="${p.id}" class="px-2 py-1 rounded-full text-xs font-bold ${pagoOf(p) ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}" title="Alternar pagamento">${pagoOf(p) ? 'Pago' : 'Pendente'}</button></td>
+      <td class="td text-center space-x-2">
+        <button data-act="zap" data-id="${p.id}" class="text-green-600" title="Copiar orçamento"><i class="fab fa-whatsapp"></i></button>
+        <button data-act="edit" data-id="${p.id}" class="text-blue-600" title="Editar"><i class="fas fa-pen"></i></button>
+        <button data-act="del" data-id="${p.id}" class="text-red-500" title="Excluir"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="11" class="td text-center py-6">Nenhum pedido encontrado.</td></tr>';
+}
+$('tb-pedidos').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  const p = pedidos.find((x) => x.id === b.dataset.id);
+  if (!p) return;
+  try {
+    if (b.dataset.act === 'edit') editar(p);
+    else if (b.dataset.act === 'pago') await updateDoc(doc(db, 'pedidos', p.id), { pago: !pagoOf(p) });
+    else if (b.dataset.act === 'del' && confirm(`Excluir o pedido de ${p.cliente}? Esta ação não pode ser desfeita.`)) await deleteDoc(doc(db, 'pedidos', p.id));
+    else if (b.dataset.act === 'zap') {
+      const t = `Orçamento – ${p.produto}\nQuantidade: ${p.qtd || 1}\nValor total: ${brl(p.valor_total)}${p.entrega ? '\nEntrega prevista: ' + p.entrega.split('-').reverse().join('/') : ''}`;
+      await navigator.clipboard.writeText(t);
+      alert('Orçamento copiado. É só colar no WhatsApp.');
+    }
+  } catch (err) { console.error(err); alert('Não foi possível concluir a ação.'); }
+});
+['f-busca', 'f-status'].forEach((id) => $(id).addEventListener('input', renderPedidos));
 
-            try {
-                await addDoc(collection(db, "pedidos"), {
-                    cliente: document.getElementById('cliente').value,
-                    produto: document.getElementById('produto').value,
-                    peso: peso,
-                    horas: horas,
-                    valor_hora: valorHora,
-                    custo_horas: custoHoras,
-                    mao_obra: maoObra,
-                    custo_material: custoMaterial,
-                    valor_total: valorTotal,
-                    data: serverTimestamp()
-                });
-                document.getElementById('form-pedido').reset();
-                calcularPrevia();
-                alert("Pedido registado com sucesso!");
-                switchTab('tab-lista-pedidos');
-            } catch (e) {
-                console.error("Erro: ", e);
-                alert("Erro ao guardar pedido. Verifique a base de dados.");
-            } finally {
-                btnSalvarPedido.disabled = false;
-                btnSalvarPedido.textContent = 'Registar Pedido';
-            }
-        });
+$('btn-csv').addEventListener('click', () => {
+  const n = (v) => (v || 0).toFixed(2).replace('.', ',');
+  const q = (s) => `"${String(s ?? '').replace(/"/g, '""')}"`;
+  const linhas = [['Data', 'Cliente', 'Produto', 'Qtd', 'Material', 'Máquina', 'Mão de obra', 'Desconto', 'Total', 'Status', 'Pago', 'Entrega', 'Obs'].join(';')]
+    .concat(pedidosFiltrados().map((p) => [fdata(p.data), q(p.cliente), q(p.produto), p.qtd || 1, n(p.custo_material), n(p.custo_horas), n(p.mao_obra), n(p.desconto), n(p.valor_total), stOf(p), pagoOf(p) ? 'Sim' : 'Não', p.entrega || '', q(p.obs)].join(';')));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + linhas.join('\n')], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'pedidos.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
 
-        // Ouvinte em Tempo Real para Pedidos
-        const qPedidos = query(collection(db, "pedidos"), orderBy("data", "desc"));
-        onSnapshot(qPedidos, (snapshot) => {
-            statusBadge.textContent = 'Online';
-            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-bold bg-green-500 text-white';
-            btnSalvarPedido.disabled = false;
-            btnSalvarPedido.classList.remove('opacity-50', 'cursor-not-allowed');
+// ---------- Materiais ----------
+function renderMateriais() {
+  $('m-medio').textContent = materiais.some((m) => m.peso_g > 0) ? 'R$ ' + custoGrama().toFixed(3).replace('.', ',') + '/g' : 'sem compras com peso (usando o valor manual)';
+  $('tb-materiais').innerHTML = materiais.length ? materiais.map((m) => `
+    <tr>
+      <td class="td">${fdata(m.data)}</td>
+      <td class="td font-medium text-gray-800">${esc(m.nome)}</td>
+      <td class="td text-right">${m.peso_g ? m.peso_g + ' g' : '—'}</td>
+      <td class="td text-right font-bold text-gray-800">${brl(m.custo)}</td>
+      <td class="td text-right">${m.peso_g ? (m.custo / m.peso_g).toFixed(3).replace('.', ',') : '—'}</td>
+      <td class="td text-center"><button data-id="${m.id}" class="text-red-500" title="Excluir"><i class="fas fa-trash"></i></button></td>
+    </tr>`).join('') : '<tr><td colspan="6" class="td text-center py-6">Nenhuma compra registrada.</td></tr>';
+}
+$('tb-materiais').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-id]');
+  if (b && confirm('Excluir esta compra? Esta ação não pode ser desfeita.')) {
+    try { await deleteDoc(doc(db, 'materiais', b.dataset.id)); } catch (err) { console.error(err); alert('Erro ao excluir.'); }
+  }
+});
+$('form-material').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('btn-salvar-material');
+  btn.disabled = true;
+  try {
+    await addDoc(collection(db, 'materiais'), { nome: $('m-nome').value.trim(), peso_g: num('m-peso'), custo: num('m-custo'), data: serverTimestamp() });
+    $('form-material').reset(); $('m-peso').value = 1000;
+  } catch (err) { console.error(err); alert('Erro ao salvar a compra.'); }
+  finally { btn.disabled = false; }
+});
 
-            const tbody = document.getElementById('tabela-pedidos');
-            tbody.innerHTML = '';
-            
-            let totalCustoFabricacao = 0;
-            let totalMaoDeObra = 0;
-            let faturamentoTotal = 0;
+// ---------- Ajustes ----------
+$('form-cfg').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    await setDoc(doc(db, 'config', 'geral'), { custo_grama: num('c-cg'), perda: num('c-perda'), margem: num('c-margem'), valor_hora: num('c-hora') }, { merge: true });
+    alert('Ajustes salvos.');
+  } catch (err) { console.error(err); alert('Erro ao salvar os ajustes.'); }
+});
 
-            if (snapshot.empty) {
-                tbody.innerHTML = '<tr><td colspan="10" class="px-4 py-4 text-center text-gray-500">Nenhum pedido registado ainda.</td></tr>';
-                
-                document.getElementById('dash-fabricacao').textContent = formatarMoeda(0);
-                document.getElementById('dash-maodeobra').textContent = formatarMoeda(0);
-                document.getElementById('dash-faturamento').textContent = formatarMoeda(0);
-                return;
-            }
+// ---------- Painel ----------
+function renderPainel() {
+  const ativos = pedidos.filter((p) => stOf(p) !== 'Cancelado' && inMonth(p.data));
+  const fat = sum(ativos, (p) => p.valor_total);
+  const rec = sum(ativos.filter(pagoOf), (p) => p.valor_total);
+  const comp = sum(materiais.filter((m) => inMonth(m.data)), (m) => m.custo);
+  const lucro = rec - comp;
+  $('d-fat').textContent = brl(fat);
+  $('d-rec').textContent = brl(rec);
+  $('d-areceber').textContent = brl(fat - rec);
+  $('d-compras').textContent = brl(comp);
+  $('d-lucro').textContent = brl(lucro);
+  $('d-margem').textContent = 'margem ' + (rec > 0 ? (lucro / rec * 100).toFixed(1).replace('.', ',') : '0') + '%';
+}
+function renderTudo() { renderPedidos(); renderMateriais(); renderPainel(); previa(); }
+$('f-mes').addEventListener('input', renderPainel);
+$('f-mes-limpar').addEventListener('click', () => { $('f-mes').value = ''; renderPainel(); });
 
-            snapshot.forEach((doc) => {
-                const p = doc.data();
-                
-                const nomeCliente = p.cliente || "Não informado";
-                const nomeProduto = p.produto || "Não informado";
-                const peso = p.peso || (p.gramas || 0); 
-                const maoObra = p.mao_obra || 0;
-                
-                const horas = p.horas || 0;
-                const custoHoras = p.custo_horas || 0;
-                
-                const custoMat = p.custo_material || (peso * 0.115);
-                const valorTot = p.valor_total || (custoMat + maoObra + custoHoras);
+// ---------- Login / listeners ----------
+const badge = (txt, cor) => { const b = $('status-badge'); b.textContent = txt; b.className = `px-3 py-1 rounded-full font-bold text-white ${cor}`; };
+const aoErro = (err) => { console.error(err); badge(err.code === 'permission-denied' ? 'Sem permissão' : 'Offline', 'bg-red-500'); };
 
-                totalCustoFabricacao += custoMat;
-                // ALTERAÇÃO FEITA AQUI: Agora soma Mão de Obra + Custo das Horas da Máquina
-                totalMaoDeObra += (maoObra + custoHoras); 
-                faturamentoTotal += valorTot;
+$('f-login').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('l-erro').textContent = '';
+  try { await signInWithEmailAndPassword(auth, $('l-email').value.trim(), $('l-senha').value); }
+  catch (err) { $('l-erro').textContent = 'E-mail ou senha incorretos.'; }
+});
+$('btn-sair').addEventListener('click', () => signOut(auth));
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-4 py-3 text-gray-600">${formatarData(p.data)}</td>
-                    <td class="px-4 py-3 font-medium text-gray-800">${nomeCliente}</td>
-                    <td class="px-4 py-3 text-gray-600">${nomeProduto}</td>
-                    <td class="px-4 py-3 text-right text-gray-600">${peso}g</td>
-                    <td class="px-4 py-3 text-right text-gray-600">${horas}h</td>
-                    <td class="px-4 py-3 text-right text-gray-600">${formatarMoeda(custoMat)}</td>
-                    <td class="px-4 py-3 text-right text-gray-600">${formatarMoeda(custoHoras)}</td>
-                    <td class="px-4 py-3 text-right text-gray-600">${formatarMoeda(maoObra)}</td>
-                    <td class="px-4 py-3 text-right font-bold text-gray-800">${formatarMoeda(valorTot)}</td>
-                    <td class="px-4 py-3 text-center">
-                        <button onclick="deletarPedido('${doc.id}')" class="text-red-500 hover:text-red-700 transition" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+onAuthStateChanged(auth, (user) => {
+  unsubs.forEach((f) => f()); unsubs = [];
+  pedidos = []; materiais = [];
+  $('login').classList.toggle('hidden', !!user);
+  $('app').classList.toggle('hidden', !user);
+  if (!user) return;
+  $('user-email').textContent = user.email;
+  badge('Conectando...', 'bg-yellow-500');
+  limparForm();
 
-            // Atualizar Dashboard
-            document.getElementById('dash-fabricacao').textContent = formatarMoeda(totalCustoFabricacao);
-            document.getElementById('dash-maodeobra').textContent = formatarMoeda(totalMaoDeObra);
-            document.getElementById('dash-faturamento').textContent = formatarMoeda(faturamentoTotal);
-        }, (error) => {
-            console.log(error);
-            statusBadge.textContent = 'Offline';
-            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-bold bg-red-500 text-white';
-        });
+  unsubs.push(onSnapshot(doc(db, 'config', 'geral'), (s) => {
+    if (s.exists()) cfg = { ...cfg, ...s.data() };
+    $('c-cg').value = cfg.custo_grama; $('c-perda').value = cfg.perda; $('c-margem').value = cfg.margem; $('c-hora').value = cfg.valor_hora;
+    if (!editId && !$('valor-hora').value) $('valor-hora').value = cfg.valor_hora;
+    previa();
+  }, aoErro));
 
-        // Ouvinte em Tempo Real para Materiais
-        const qMateriais = query(collection(db, "materiais"), orderBy("data", "desc"));
-        onSnapshot(qMateriais, (snapshot) => {
-            btnSalvarMaterial.disabled = false;
-            btnSalvarMaterial.classList.remove('opacity-50', 'cursor-not-allowed');
+  unsubs.push(onSnapshot(query(collection(db, 'pedidos'), orderBy('data', 'desc')), (s) => {
+    pedidos = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+    badge('Online', 'bg-green-500');
+    $('btn-salvar-pedido').disabled = false;
+    renderTudo();
+  }, aoErro));
 
-            const tbody = document.getElementById('tabela-materiais');
-            tbody.innerHTML = '';
-            
-            let totalGastoCompras = 0;
-
-            if (snapshot.empty) {
-                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">Nenhum material registado.</td></tr>';
-                document.getElementById('dash-compras').textContent = formatarMoeda(0);
-                return;
-            }
-
-            snapshot.forEach((doc) => {
-                const m = doc.data();
-                const custo = m.custo || 0;
-                totalGastoCompras += custo;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-4 py-3 text-gray-600">${formatarData(m.data)}</td>
-                    <td class="px-4 py-3 font-medium text-gray-800">${m.nome || "Não informado"}</td>
-                    <td class="px-4 py-3 text-right font-bold text-gray-800">${formatarMoeda(custo)}</td>
-                    <td class="px-4 py-3 text-center">
-                        <button onclick="deletarMaterial('${doc.id}')" class="text-red-500 hover:text-red-700 transition" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // Atualizar Dashboard
-            document.getElementById('dash-compras').textContent = formatarMoeda(totalGastoCompras);
-        });
-    </script>
+  unsubs.push(onSnapshot(query(collection(db, 'materiais'), orderBy('data', 'desc')), (s) => {
+    materiais = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+    $('btn-salvar-material').disabled = false;
+    renderTudo();
+  }, aoErro));
+});
+</script>
 </body>
 </html>

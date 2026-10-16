@@ -176,7 +176,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, setDoc, onSnapshot, query, orderBy, serverTimestamp, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCH9mpe9ZoRMMLI3zR8p8ALVrQlqAQpjXo",
+  apiKey: "AIzaSyCH9mpe9ZoRMMLI3zR8p8ALVrQ1qAQpjXo",
   authDomain: "pedidos-3d-1332d.firebaseapp.com",
   projectId: "pedidos-3d-1332d",
   storageBucket: "pedidos-3d-1332d.firebasestorage.app",
@@ -407,7 +407,17 @@ $('f-login').addEventListener('submit', async (e) => {
   e.preventDefault();
   $('l-erro').textContent = '';
   try { await signInWithEmailAndPassword(auth, $('l-email').value.trim(), $('l-senha').value); }
-  catch (err) { $('l-erro').textContent = 'E-mail ou senha incorretos.'; }
+  catch (err) {
+    console.error(err);
+    const msgs = {
+      'auth/invalid-credential': 'E-mail ou senha incorretos.',
+      'auth/invalid-email': 'E-mail em formato inválido.',
+      'auth/operation-not-allowed': 'Login por e-mail/senha não está ativado no Firebase (Authentication → Método de login).',
+      'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
+      'auth/network-request-failed': 'Sem conexão com a internet.'
+    };
+    $('l-erro').textContent = (msgs[err.code] || 'Erro ao entrar.') + ' [' + (err.code || 'sem código') + ']';
+  }
 });
 $('btn-sair').addEventListener('click', () => signOut(auth));
 
